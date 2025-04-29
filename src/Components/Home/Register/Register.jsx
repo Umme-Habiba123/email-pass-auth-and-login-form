@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../../../firebase.init'
+import { FaEye, FaEyeSlash } from 'react-icons/fa6';
+import { Link } from 'react-router';
 const Register = () => {
 
     const [success, setSuccess] = useState(false)
 
     const [errorMsg, setErrorMsg] = useState('')
+
+    const [showPass, setShowPass] = useState(false)
 
     const handlerRegister = e => {
         e.preventDefault()
@@ -14,27 +18,40 @@ const Register = () => {
         console.log(email, password)
 
         setSuccess(false)
+        setErrorMsg('')
 
 
         const passwordRegExp = (password) => {
-            if (!/?=.*\d/.test(password)) {
+            if (!/.*\d/.test(password)) {
                 setErrorMsg('Password must contain at least one number')
             } else if (!/(?=.*[a-z])/.test(password)) {
                 setErrorMsg('password must have one lower case')
             } else if (!/(?=.*[A-Z])/.test(password)) {
                 setErrorMsg('password must have 1 upper case')
-            } else if(password.length<8){
+            } else if (password.length < 8) {
                 setErrorMsg('password must have 8 charecters')
             }
             else {
                 setSuccess(true)
             }
+
         }
+
+        if (!passwordRegExp(password)) {
+            return;
+        }
+
+
 
         createUserWithEmailAndPassword(auth, email, password).then((result) => {
             console.log(result)
-            setSuccess(true)
-            setErrorMsg('')
+           
+            sendEmailVerification(auth.currentUser)
+            .then(()=>{
+                setSuccess(true)
+                alert('We send you a varification email.Please check!!')
+            })
+            // setErrorMsg('')
         }).catch(error => {
             console.log(error)
             setErrorMsg(error.message)
@@ -68,10 +85,19 @@ const Register = () => {
                     <input type="email" name='email'
                         placeholder="mail@site.com" required />
                 </label>
-                <div className="validator-hint hidden">Enter valid email address</div>
+                <label className="input validator join-item mt-5">
+                    
+                    <input type="name" name='name'
+                        placeholder="name" required />
+                </label>
+                
 
-
-
+                <label className="input validator join-item mt-5">
+                    
+                    <input type="text" name='photo'
+                        placeholder="Photo URL name" required />
+                </label>
+              
                 <br />
 
                 <label className="input validator mt-5">
@@ -89,24 +115,38 @@ const Register = () => {
                             <circle cx="16.5" cy="7.5" r=".5" fill="currentColor"></circle>
                         </g>
                     </svg>
-                    <input
-                        type="password" name='password'
-                        required
-                        placeholder="Password"
-                        minLength="8"
-                        pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-                        title="Must be more than 8 characters, including number, lowercase letter, uppercase letter"
-                    />
+                    <div>
+                        <input
+                        name='password'
+                            type={showPass?'text':'password'}
+                            required
+                            placeholder="Password"
+                            minLength="8"
+                            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                            title="Must be more than 8 characters, including number, lowercase letter, uppercase letter"
+                        />
+                        <button onClick={()=>setShowPass(!showPass)} className='ml-10'>
+                           {
+                            showPass?<FaEyeSlash></FaEyeSlash>: <FaEye></FaEye>
+                           }
+                        </button>
+                    </div>
                 </label>
                 <p className="validator-hint hidden">
                     Must be more than 8 characters, including
                     <br />At least one number <br />At least one lowercase letter <br />At least one uppercase letter
                 </p>
+                <p>Forgot password ?</p>
                 <br />
+               
+              
 
-                <input className='btn btn-primary mt-5' type="Submit" value="Submit" />
+                <input className='btn btn-primary ' type="Submit" value="Submit" />
+                <p className='mt-3'>Already have an account? Please <span className='text-blue-400 underline'><Link to='/Login'>login</Link></span></p>
+
             </form>
-
+            
+         
             {
                 errorMsg && <p className='text-red-700'> {errorMsg} </p>
             }

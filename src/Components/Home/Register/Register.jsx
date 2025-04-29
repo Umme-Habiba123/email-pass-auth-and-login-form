@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
 import { auth } from '../../../firebase.init'
 import { FaEye, FaEyeSlash } from 'react-icons/fa6';
 import { Link } from 'react-router';
@@ -13,51 +13,76 @@ const Register = () => {
 
     const handlerRegister = e => {
         e.preventDefault()
+        const photo = e.target.photo.value
+        const name = e.target.name.value
         const email = e.target.email.value
         const password = e.target.password.value
-        console.log(email, password)
+       
 
         setSuccess(false)
         setErrorMsg('')
-
+        
 
         const passwordRegExp = (password) => {
             if (!/.*\d/.test(password)) {
                 setErrorMsg('Password must contain at least one number')
+                return false
             } else if (!/(?=.*[a-z])/.test(password)) {
                 setErrorMsg('password must have one lower case')
+                return false
             } else if (!/(?=.*[A-Z])/.test(password)) {
                 setErrorMsg('password must have 1 upper case')
+                return false
             } else if (password.length < 8) {
                 setErrorMsg('password must have 8 charecters')
+                return false
             }
             else {
                 setSuccess(true)
+                return true
             }
 
         }
-
+          console.log(passwordRegExp(password))
         if (!passwordRegExp(password)) {
             return;
         }
 
-
+        console.log(email, password, name, photo)
 
         createUserWithEmailAndPassword(auth, email, password).then((result) => {
             console.log(result)
+            const user=result.user
+          
+
+            sendEmailVerification(user)
+                .then(() => {
+                    setSuccess(true)
+                   
+                })
+                const profile={
+                    displayName:name,
+                    photoURL:photo
+                }
+        
+                updateProfile(user,profile)
+                .then(()=>{
+                    alert('We send you a varification email.Please check!!')
+                }).catch(error=>console.log(error))
            
-            sendEmailVerification(auth.currentUser)
-            .then(()=>{
-                setSuccess(true)
-                alert('We send you a varification email.Please check!!')
-            })
+                
             // setErrorMsg('')
         }).catch(error => {
             console.log(error)
             setErrorMsg(error.message)
         })
 
+
+       
+        
+
     }
+    console.log(errorMsg)
 
 
 
@@ -86,18 +111,18 @@ const Register = () => {
                         placeholder="mail@site.com" required />
                 </label>
                 <label className="input validator join-item mt-5">
-                    
+
                     <input type="name" name='name'
-                        placeholder="name" required />
+                        placeholder="Your name" required />
                 </label>
-                
+
 
                 <label className="input validator join-item mt-5">
-                    
+
                     <input type="text" name='photo'
                         placeholder="Photo URL name" required />
                 </label>
-              
+
                 <br />
 
                 <label className="input validator mt-5">
@@ -117,18 +142,18 @@ const Register = () => {
                     </svg>
                     <div>
                         <input
-                        name='password'
-                            type={showPass?'text':'password'}
+                            name='password'
+                            type={showPass ? 'text' : 'password'}
                             required
                             placeholder="Password"
                             minLength="8"
                             pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
                             title="Must be more than 8 characters, including number, lowercase letter, uppercase letter"
                         />
-                        <button onClick={()=>setShowPass(!showPass)} className='ml-10'>
-                           {
-                            showPass?<FaEyeSlash></FaEyeSlash>: <FaEye></FaEye>
-                           }
+                        <button onClick={() => setShowPass(!showPass)} className='ml-10'>
+                            {
+                                showPass ? <FaEyeSlash></FaEyeSlash> : <FaEye></FaEye>
+                            }
                         </button>
                     </div>
                 </label>
@@ -138,15 +163,15 @@ const Register = () => {
                 </p>
                 <p>Forgot password ?</p>
                 <br />
-               
-              
+
+
 
                 <input className='btn btn-primary ' type="Submit" value="Submit" />
                 <p className='mt-3'>Already have an account? Please <span className='text-blue-400 underline'><Link to='/Login'>login</Link></span></p>
 
             </form>
-            
-         
+
+
             {
                 errorMsg && <p className='text-red-700'> {errorMsg} </p>
             }
